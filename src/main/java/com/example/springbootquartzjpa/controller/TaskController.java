@@ -1,8 +1,8 @@
 package com.example.springbootquartzjpa.controller;
 
+import com.example.springbootquartzjpa.config.DataNotFoundException;
 import com.example.springbootquartzjpa.entity.Tasks;
 import com.example.springbootquartzjpa.job.TaskJob;
-import com.example.springbootquartzjpa.repository.TaskRepository;
 import com.example.springbootquartzjpa.service.QuartzSchedulerService;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +34,11 @@ public class TaskController {
     @Autowired
     private Scheduler scheduler;
 
-    @PostMapping("/schedule")
-    public String schedulerTask(@RequestBody Tasks tasks) throws SchedulerException {
+    @Autowired
+    private QuartzSchedulerService quartzSchedulerService;
+
+    @PostMapping("")
+    public ResponseEntity<String> schedulerTask(@RequestBody Tasks tasks) {
         try {
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put("tasks" , tasks);
@@ -48,29 +51,45 @@ public class TaskController {
                     .build();
 
             Trigger trigger = TriggerBuilder.newTrigger()
-                    .withIdentity(jobId + "TaskJobTrigger", "group1")
+                    .withIdentity(jobId + " - TaskJobTrigger", "group1")
                     .startNow()
                     .withSchedule(CronScheduleBuilder.cronSchedule("0 */1 * 1/1 * ? *"))
                     .build();
 
             scheduler.scheduleJob(jobDetail,trigger);
-            return "Task scheduled successfully!";
-        }catch (ConfigDataNotFoundException e){
+            return ResponseEntity.ok("Task scheduled successfully!");
+        }catch (DataNotFoundException e){
                 e.printStackTrace();
-                return "Error scheduling task: " + e.getMessage();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }catch (SchedulerException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error scheduling task: " + e.getMessage());
         }
     }
-//    @Autowired
-//    private QuartzSchedulerService quartzSchedulerService;
-//    @PostMapping("/schedule")
-//    public ResponseEntity<String> scheduleTask(@RequestBody Tasks tasks) {
-//        try {
-//            quartzSchedulerService.save(tasks);
-//            return ResponseEntity.ok("Task scheduled successfully");
-//        }catch (Exception e){
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error scheduling task: " + e.getMessage());
-//        }
-//
-//
-//    }
+
+
+    @GetMapping("/")
+    public ResponseEntity<List<Tasks>> getAll(){
+        List<Tasks> tasks = quartzSchedulerService.getAll();
+        return ResponseEntity.ok(tasks);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteTask(@PathVariable Long id) {
+        try {
+            quartzSchedulerService.deleteTask(id);
+            return ResponseEntity.ok("Task deleted successfully");
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+    @DeleteMapping("/deleteAll")
+    public ResponseEntity<String> deleteAll() {
+        try {
+            quartzSchedulerService.deleteAll();
+            return ResponseEntity.ok("Task deleted successfully");
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }

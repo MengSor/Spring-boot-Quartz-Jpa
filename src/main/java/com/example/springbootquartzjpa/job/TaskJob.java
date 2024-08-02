@@ -1,7 +1,7 @@
 package com.example.springbootquartzjpa.job;
 
 import com.example.springbootquartzjpa.entity.Tasks;
-import com.example.springbootquartzjpa.repository.TaskRepository;
+
 
 import com.example.springbootquartzjpa.service.QuartzSchedulerService;
 import org.quartz.Job;
@@ -29,16 +29,31 @@ public class TaskJob implements Job {
 
         log.info("Job started at:" + new Date());
 
+//        Tasks tasks = (Tasks)  jobExecutionContext.getMergedJobDataMap().get("tasks");
+//
+//        if (tasks != null){
+//            try {
+//                quartzSchedulerService.save(tasks);
+//                log.info("Job executed successfully.");
+//            }catch (Exception e){
+//                log.error("Error saving task. " + e.getMessage(),e);
+//                throw new JobExecutionException(e);
+//            }
+//        }else {
+//            log.warn("No tasks found in JobExecutionContext!");
+//        }
+//        log.info("End Job Exception at: " + new Date());
+
         try {
             Tasks tasks = (Tasks)  jobExecutionContext.getMergedJobDataMap().get("tasks");
 
             if (tasks != null){
-                quartzSchedulerService.save(tasks);
-                log.info("Job executed successfully");
+                 quartzSchedulerService.save(tasks);
+                log.info("Job executed successfully.");
             }else {
-                log.warn("No tasks data found in JobExecutionContext.");
+                log.info("Job executed not found.");
             }
-        }catch (Exception e){
+        } catch (Exception e){
             log.error("Error executing job: ", e);
             throw new JobExecutionException(e);
         }finally {

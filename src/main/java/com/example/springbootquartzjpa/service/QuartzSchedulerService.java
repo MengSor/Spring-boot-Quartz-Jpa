@@ -9,31 +9,53 @@ import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 @Service
 public class QuartzSchedulerService {
     @Autowired
-   private TaskRepository taskRepository;
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private Scheduler scheduler;
+
+   public List<Tasks> getAll() {
+        return taskRepository.findAll();
+   }
 
     public Tasks save(Tasks taskJob){
-       return taskRepository.save(taskJob);
+        return taskRepository.save(taskJob);
     }
 
-//    @Autowired
-//    private Scheduler scheduler;
+    public void deleteTask(Long id){
+       taskRepository.deleteById(id);
+    }
+
+    public void deleteAll(){
+       taskRepository.deleteAll();
+    }
+
+//    public String scheduleTask(Tasks tasks) throws SchedulerException {
+//       JobDataMap jobDataMap = new JobDataMap();
+//       jobDataMap.put("tasks" , tasks);
 //
-//    public void save(Tasks tasks) throws SchedulerException {
-//        JobDetail jobDetail = JobBuilder.newJob(TaskJob.class)
-//                .withIdentity("sampleJob", "group1")
-//                 .usingJobData("tasks", tasks)
-//                .storeDurably()
-//                .build();
+//       String jobId = UUID.randomUUID().toString();
 //
-//        Trigger trigger = TriggerBuilder.newTrigger()
-//                .withIdentity("sampleTrigger", "group1")
-//                .withSchedule(CronScheduleBuilder.cronSchedule("0 */2 * 1/1 * ? *"))
-//                .forJob(jobDetail)
-//                .build();
+//       JobDetail jobDetail = JobBuilder.newJob(TaskJob.class)
+//               .usingJobData(jobDataMap)
+//               .withIdentity(jobId , "group1")
+//               .build();
 //
-//        scheduler.scheduleJob(jobDetail, trigger);
+//       Trigger trigger = TriggerBuilder.newTrigger()
+//               .withIdentity(jobId + "-trigger" , "group1")
+//               .startNow()
+//               .withSchedule(CronScheduleBuilder.cronSchedule("0 */1 * 1/1 * ? *"))
+//               .build();
+//
+//       scheduler.scheduleJob(jobDetail , trigger);
+//       return "Task Scheduled Successfully!!";
 //    }
+
 }
